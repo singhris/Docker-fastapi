@@ -1,6 +1,5 @@
 import requests
 
-# Define your base URL
 BASE_URL = "https://docker-fastapi-a1lx.onrender.com"
 
 def test_root():
@@ -14,7 +13,6 @@ def test_root():
 
 def test_post_data():
     print("\n--- Testing POST Data ---")
-    # Replace '/items' with whatever endpoint you created in your FastAPI code
     endpoint = "/items" 
     payload = {
         "name": "Test Product",
@@ -37,5 +35,3 @@ def test_post_data():
 
 if __name__ == "__main__":
     test_root()
-    # Uncomment the line below if you have a POST endpoint set up
-    # test_post_data()

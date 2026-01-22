@@ -5,10 +5,13 @@ services:
     build:
       context: .
     volumes:
-      # Mount the local app directory to the /code/app directory in the container    
       - ./app:/code/app
     ports:
       - "8080:8080"
+    # 1. Load the file here
+    env_file:
+      - .env
+    # 2. Only keep config vars here, REMOVE the API key
     environment:
       - PYTHONUNBUFFERED=1
-      - MODE
+      - MODE=development
