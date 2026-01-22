@@ -13,7 +13,9 @@ API_KEY = os.getenv("MY_API_KEY")
 API_HEADER = "X-API-Key"  # Must match the API_KEY_NAME in your main.py
 
 def test_root():
-    print("--- 1. Testing GET Root (Public) ---")
+    print("--- 1. Testing Public endpoing ---")
+    url = f"{BASE_URL}/"
+    print(f"URL: {url}")
     try:
         response = requests.get(f"{BASE_URL}/")
         print(f"Status Code: {response.status_code}")
@@ -28,11 +30,13 @@ def test_root():
         print(f"An error occurred: {e}")
 
 def test_protected_no_key():
-    print("\n--- 2. Testing Protected Route (No Key) ---")
+    print("\n--- 2. Testing Protected Endpoint (No Key) ---")
     try:
         # We purposely do NOT send headers here
         response = requests.get(f"{BASE_URL}/secret")
         print(f"Status Code: {response.status_code}")
+        url = f"{BASE_URL}/protected"
+        print(f"URL: {url}")
         
         if response.status_code == 403:
             print("✅ Security Check Passed! (Access correctly denied)")
