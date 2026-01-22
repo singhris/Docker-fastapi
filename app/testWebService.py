@@ -1,41 +1,74 @@
 import requests
+import os
+from dotenv import load_dotenv
 
-# Define your base URL
+# Load local .env so we can use the same key for testing
+load_dotenv()
+
+# 1. Update this to your actual Render URL
 BASE_URL = "https://docker-fastapi-a1lx.onrender.com"
 
+# Get the key from your local .env file
+API_KEY = os.getenv("MY_API_KEY") 
+API_HEADER = "X-API-Key"  # Must match the API_KEY_NAME in your main.py
+
 def test_root():
-    print("--- Testing GET Root ---")
+    print("--- 1. Testing GET Root (Public) ---")
     try:
         response = requests.get(f"{BASE_URL}/")
         print(f"Status Code: {response.status_code}")
-        print(f"Response JSON: {response.json()}")
+        print(f"Response: {response.json()}")
+        
+        if response.status_code == 200:
+            print("✅ Root test passed!")
+        else:
+            print("❌ Root test failed.")
+            
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def test_post_data():
-    print("\n--- Testing POST Data ---")
-    # Replace '/items' with whatever endpoint you created in your FastAPI code
-    endpoint = "/items" 
-    payload = {
-        "name": "Test Product",
-        "price": 25.50,
-        "is_offer": True
-    }
+def test_protected_no_key():
+    print("\n--- 2. Testing Protected Route (No Key) ---")
+    try:
+        # We purposely do NOT send headers here
+        response = requests.get(f"{BASE_URL}/secret")
+        print(f"Status Code: {response.status_code}")
+        
+        if response.status_code == 403:
+            print("✅ Security Check Passed! (Access correctly denied)")
+        else:
+            print(f"❌ Security Risk! Expected 403 but got {response.status_code}")
+            
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+def test_protected_with_key():
+    print("\n--- 3. Testing Protected Route (With Key) ---")
+    
+    if not API_KEY:
+        print("❌ SKIPPING: No MY_API_KEY found in your local .env file.")
+        return
+
+    # Create the header dictionary
+    headers = {API_HEADER: API_KEY}
     
     try:
-        response = requests.post(f"{BASE_URL}{endpoint}", json=payload)
-        if response.status_code == 200 or response.status_code == 201:
-            print("Success!")
-            print(f"Response: {response.json()}")
-        elif response.status_code == 404:
-            print("Error 404: This endpoint does not exist. Check your main.py routes.")
+        response = requests.get(f"{BASE_URL}/secret", headers=headers)
+        print(f"Status Code: {response.status_code}")
+        print(f"Response: {response.json()}")
+        
+        if response.status_code == 200:
+            print("✅ Authorized Access Passed!")
+        elif response.status_code == 403:
+            print("❌ Access Denied. Check if the Key on Render matches your local .env file.")
+            print(f"Sending Header: {headers}")
         else:
-            print(f"Failed with Status Code: {response.status_code}")
-            print(f"Message: {response.text}")
+            print(f"❌ Unexpected status: {response.status_code}")
+
     except Exception as e:
         print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
     test_root()
-    # Uncomment the line below if you have a POST endpoint set up
-    # test_post_data()
+    test_protected_no_key()
+    test_protected_with_key()
