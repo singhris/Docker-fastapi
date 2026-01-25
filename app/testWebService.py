@@ -2,77 +2,74 @@ import requests
 import os
 from dotenv import load_dotenv
 
-# Load local .env so we can use the same key for testing
+# Load local .env
 load_dotenv()
 
-# 1. Update this to your actual Render URL
+# 1. Configuration
 BASE_URL = "https://docker-fastapi-a1lx.onrender.com"
-
-# Get the key from your local .env file
 API_KEY = os.getenv("MY_API_KEY") 
-API_HEADER = "X-API-Key"  # Must match the API_KEY_NAME in your main.py
+JWT_TOKEN = os.getenv("TEST_JWT_TOKEN") # The long eyJ... string from JWT.io
+API_HEADER = "X-API-Key"
 
 def test_root():
-    print("--- 1. Testing Public endpoing ---")
+    print("--- 1. Testing Public Endpoint ---")
     url = f"{BASE_URL}/"
     print(f"URL: {url}")
     try:
-        response = requests.get(f"{BASE_URL}/")
+        response = requests.get(url)
         print(f"Status Code: {response.status_code}")
         print(f"Response: {response.json()}")
-        
         if response.status_code == 200:
             print("✅ Root test passed!")
-        else:
-            print("❌ Root test failed.")
-            
     except Exception as e:
         print(f"An error occurred: {e}")
 
-def test_protected_no_key():
-    print("\n--- 2. Testing Protected Endpoint (No Key) ---")
-    try:
-        # We purposely do NOT send headers here
-        response = requests.get(f"{BASE_URL}/secret")
-        print(f"Status Code: {response.status_code}")
-        url = f"{BASE_URL}/protected"
-        print(f"URL: {url}")
-        
-        if response.status_code == 403:
-            print("✅ Security Check Passed! (Access correctly denied)")
-        else:
-            print(f"❌ Security Risk! Expected 403 but got {response.status_code}")
-            
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-def test_protected_with_key():
-    print("\n--- 3. Testing Protected Route (With Key) ---")
+def test_api_key_protected():
+    print("\n--- 2. Testing API Key Protected Endpoint ---")
+    url = f"{BASE_URL}/secret"
+    print(f"URL: {url}")
     
-    if not API_KEY:
-        print("❌ SKIPPING: No MY_API_KEY found in your local .env file.")
+    # Test No Key
+    print("Sub-test: No Key")
+    res_no_key = requests.get(url)
+    print(f"Status: {res_no_key.status_code} (Expected 403)")
+
+    # Test With Key
+    if API_KEY:
+        print("Sub-test: With Key")
+        headers = {API_HEADER: API_KEY}
+        res_key = requests.get(url, headers=headers)
+        print(f"Status: {res_key.status_code}")
+        print(f"Response: {res_key.json()}")
+        if res_key.status_code == 200:
+            print("✅ API Key test passed!")
+
+def test_jwt_messages():
+    print("\n--- 3. Testing JWT Protected Endpoint (/messages) ---")
+    url = f"{BASE_URL}/messages"
+    print(f"URL: {url}")
+
+    if not JWT_TOKEN:
+        print("❌ SKIPPING: No TEST_JWT_TOKEN found in your .env")
         return
 
-    # Create the header dictionary
-    headers = {API_HEADER: API_KEY}
+    # Use Bearer token format
+    headers = {"Authorization": f"Bearer {JWT_TOKEN}"}
     
     try:
-        response = requests.get(f"{BASE_URL}/secret", headers=headers)
+        response = requests.get(url, headers=headers)
         print(f"Status Code: {response.status_code}")
         print(f"Response: {response.json()}")
         
         if response.status_code == 200:
-            print("✅ Authorized Access Passed!")
-        elif response.status_code == 403:
-            print("❌ Access Denied. Check if the Key on Render matches your local .env file.")
-            print(f"Sending Header: {headers}")
+            print("✅ JWT test passed!")
         else:
-            print(f"❌ Unexpected status: {response.status_code}")
-
+            print(f"❌ JWT test failed with status {response.status_code}")
+            
     except Exception as e:
         print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
     test_root()
-    test_protected_no_key()
-    test_protected_with_key()
+    test_api_key_protected()
+    test_jwt_messages()

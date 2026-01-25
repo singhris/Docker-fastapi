@@ -1,5 +1,6 @@
 fastapi[standard]
-pydantic
+python-dotenv
 pandas
 scikit-learn
 joblib
+PyJWT
